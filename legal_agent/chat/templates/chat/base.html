@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Legal Agent</title>
+    <link rel="stylesheet" href="{% static 'chat/style.css' %}">
+</head>
+<body>
+    <style>.chat-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 8px;
+}
+
+.chat-link {
+    flex: 1;
+    text-decoration: none;
+    color: inherit;
+}
+
+.delete-form {
+    margin-left: 8px;
+}
+
+.delete-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    opacity: 0.4;
+    font-size: 14px;
+}
+
+.delete-btn:hover {
+    opacity: 1;
+}
+.chat-title{
+    flex:1;
+    cursor:pointer;
+}
+
+.rename-input{
+    width:100%;
+    border:none;
+    outline:none;
+    background:#f0f0f0;
+    border-radius:6px;
+    padding:4px;
+}
+</style>
+<div class="app">
+    <aside class="sidebar">
+        <a href="{% url 'create_chat' %}" class="new-chat">
+            <span>+</span> New Chat
+        </a>
+        <div class="chat-history">
+            {% for chat in chats %}
+<div class="chat-item">
+
+    <span class="chat-title"
+          data-id="{{ chat.id }}"
+          onclick="startRename(this)">
+        {{ chat.title }}
+    </span>
+
+    <form method="post" action="{% url 'delete_chat' chat.id %}" class="delete-form">
+        {% csrf_token %}
+        <button type="submit" class="delete-btn">🗑</button>
+    </form>
+
+</div>
+{% endfor %}
+        </div>
+    </aside>
+
+    <main class="main">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+<script>
+function startRename(el) {
+
+    const id = el.dataset.id
+    const oldText = el.innerText
+
+    const input = document.createElement("input")
+    input.value = oldText
+    input.className = "rename-input"
+
+    el.replaceWith(input)
+    input.focus()
+
+    input.addEventListener("keydown", function(e){
+        if(e.key === "Enter"){
+            finishRename(input, id)
+        }
+    })
+
+    input.addEventListener("blur", function(){
+        finishRename(input, id)
+    })
+}
+
+function finishRename(input, id){
+
+    const newTitle = input.value
+
+    fetch(`/rename/${id}/`, {
+        method:"POST",
+        headers:{
+            "X-CSRFToken": getCookie("csrftoken"),
+            "Content-Type":"application/x-www-form-urlencoded"
+        },
+        body:`title=${encodeURIComponent(newTitle)}`
+    })
+    .then(r=>r.json())
+    .then(data=>{
+        const span = document.createElement("span")
+        span.className="chat-title"
+        span.dataset.id=id
+        span.innerText=data.title
+        span.onclick=()=>startRename(span)
+        input.replaceWith(span)
+    })
+}
+
+function getCookie(name){
+    let cookieValue = null;
+    if(document.cookie && document.cookie !== ''){
+        const cookies = document.cookie.split(';');
+        for(let i=0;i<cookies.length;i++){
+            const cookie = cookies[i].trim();
+            if(cookie.substring(0,name.length+1)=== (name+'=')){
+                cookieValue = decodeURIComponent(cookie.substring(name.length+1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+</body>
+</html>

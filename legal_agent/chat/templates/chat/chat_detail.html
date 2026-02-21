@@ -1,0 +1,95 @@
+{% extends "chat/base.html" %}
+
+{% block content %}
+
+<!-- 🔹 MESSAGE AREA (added class for auto-scroll) -->
+<div class="messages chat-messages">
+    {% for message in messages %}
+    <div class="message {{ message.role }}">
+        <div class="content">
+
+            {% if message.role == "assistant" %}
+            <div class="ai-tag">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z"/>
+                </svg>
+                Legal Assistant
+            </div>
+            {% endif %}
+
+            {% if message.role == "assistant" %}
+<div class="stream-text">{{ message.content }}</div>
+{% else %}
+{{ message.content|linebreaks }}
+{% endif %}
+
+        </div>
+    </div>
+
+    {% empty %}
+    <div style="text-align: center; margin-top: 15vh;">
+        <h1 style="font-size: 40px; font-weight: 500; color: #1f1f1f; margin-bottom: 16px;">
+            Hello, {{ request.user.username|capfirst }}
+        </h1>
+        <p style="font-size: 24px; color: #b4b4b4;">
+            How can I assist you with Indian Law today?
+        </p>
+    </div>
+    {% endfor %}
+</div>
+
+
+<!-- 🔹 INPUT AREA -->
+<div class="input-container">
+    <form method="post" class="input-box">
+        {% csrf_token %}
+
+        <textarea name="message"
+                  placeholder="Ask anything about IPC, CrPC, or Case Law..."
+                  rows="1"
+                  required
+                  oninput='this.style.height = ""; this.style.height = this.scrollHeight + "px"'></textarea>
+
+        <button type="submit">Ask AI</button>
+    </form>
+</div>
+
+
+<!-- 🔹 AUTO SCROLL SCRIPT (THE IMPORTANT FIX) -->
+<script>
+window.onload = function () {
+    const container = document.querySelector(".chat-messages");
+    if (container) {
+        container.scrollTo({
+            top: container.scrollHeight,
+            behavior: "smooth"
+        });
+    }
+};
+</script>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", ()=>{
+
+    document.querySelectorAll(".stream-text").forEach(el=>{
+
+        const text = el.innerText
+        el.innerText=""
+
+        let i=0
+
+        function type(){
+            if(i < text.length){
+                el.innerText += text.charAt(i)
+                i++
+                setTimeout(type, 10)
+            }
+        }
+
+        type()
+    })
+})
+</script>
+
+{% endblock %}
